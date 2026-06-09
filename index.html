@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TimeTask — A beautiful new tab page with live clock, year-end countdown, and to-do list with time tracking.">
+  <title>TimeTask</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- Top Left Corner: Bookmarks Button -->
+  <button class="top-btn" id="bookmarks-btn" title="View Bookmarks">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+  </button>
+
+  <!-- Bookmarks Modal -->
+  <div class="bookmarks-modal" id="bookmarks-modal">
+    <div class="bookmarks-modal__content">
+      <div class="bookmarks-modal__header">
+        <h2>Bookmarks</h2>
+        <button class="bookmarks-modal__close" id="bookmarks-close-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="bookmarks-modal__body" id="bookmarks-tree">
+        <p class="bookmarks-modal__empty">Loading bookmarks...</p>
+      </div>
+    </div>
+  </div>
+  <!-- Ambient background orbs -->
+  <div class="bg-orb bg-orb--1"></div>
+  <div class="bg-orb bg-orb--2"></div>
+  <div class="bg-orb bg-orb--3"></div>
+
+  <main class="container">
+    <!-- Clock Section -->
+    <section class="clock-section" id="clock-section">
+      <div class="clock" id="clock">
+        <span class="clock__digit" id="clock-hours">00</span>
+        <span class="clock__sep">:</span>
+        <span class="clock__digit" id="clock-minutes">00</span>
+        <span class="clock__sep">:</span>
+        <span class="clock__digit clock__digit--seconds" id="clock-seconds">00</span>
+        <span class="clock__period" id="clock-period">AM</span>
+      </div>
+      <p class="clock__date" id="clock-date">Loading…</p>
+    </section>
+
+    <!-- Year-end countdown -->
+    <section class="countdown-card" id="countdown-card">
+      <p class="countdown-card__label">TIME UNTIL YEAR END</p>
+      <div class="countdown-card__values">
+        <div class="countdown-card__unit">
+          <span class="countdown-card__number" id="cd-days">000</span>
+          <span class="countdown-card__name">DAYS</span>
+        </div>
+        <div class="countdown-card__unit">
+          <span class="countdown-card__number" id="cd-hours">00</span>
+          <span class="countdown-card__name">HOURS</span>
+        </div>
+        <div class="countdown-card__unit">
+          <span class="countdown-card__number" id="cd-minutes">00</span>
+          <span class="countdown-card__name">MINUTES</span>
+        </div>
+        <div class="countdown-card__unit">
+          <span class="countdown-card__number" id="cd-seconds">00</span>
+          <span class="countdown-card__name">SECONDS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Habit Tracker -->
+    <section class="habit-widget" id="habit-widget">
+      <div class="habit-widget__header">
+        <div class="habit-widget__title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <h1>Daily Habits</h1>
+        </div>
+        <button class="habit-widget__toggle" id="habit-toggle-btn" title="Show/Hide Habits">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+      </div>
+      <ul class="habit-list" id="habit-list">
+        <!-- Habits rendered here -->
+      </ul>
+      <form class="habit-form" id="habit-form">
+        <input type="text" id="habit-input" class="habit-input" placeholder="New habit..." autocomplete="off" required>
+        <button type="submit" class="habit-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </form>
+    </section>
+
+    <!-- TimeTask Widget -->
+    <section class="timetask" id="timetask-widget">
+      <!-- Header -->
+      <div class="timetask__header">
+        <div class="timetask__title">
+          <svg class="timetask__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <h1>TimeTask</h1>
+        </div>
+        <div class="timetask__toggle-wrap" id="toggle-wrap">
+          <button class="timetask__toggle-btn" id="toggle-completed-btn" title="Toggle task visibility">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <div class="timetask__dropdown" id="toggle-dropdown">
+            <button class="timetask__dropdown-item" id="hide-completed-btn" data-mode="completed">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              Hide Completed
+            </button>
+            <button class="timetask__dropdown-item" id="hide-all-btn" data-mode="all">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              Hide All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="timetask__stats">
+        <div class="timetask__stat">
+          <span class="timetask__stat-label">TOTAL TIME</span>
+          <span class="timetask__stat-value" id="stat-total-time">0h 0m</span>
+        </div>
+        <div class="timetask__stat">
+          <span class="timetask__stat-label">TASKS</span>
+          <span class="timetask__stat-value" id="stat-tasks">0</span>
+        </div>
+        <div class="timetask__stat">
+          <span class="timetask__stat-label">COMPLETED</span>
+          <span class="timetask__stat-value" id="stat-completed">0</span>
+        </div>
+        <div class="timetask__stat">
+          <span class="timetask__stat-label">ELAPSED</span>
+          <span class="timetask__stat-value" id="stat-elapsed">00:00:00</span>
+        </div>
+      </div>
+
+      <!-- Add task form -->
+      <form class="timetask__form" id="task-form">
+        <input type="text" class="timetask__input" id="task-input" placeholder="What needs to be done?" autocomplete="off" required>
+        <div class="timetask__time-inputs">
+          <div class="timetask__time-group">
+            <label class="timetask__time-label">HOURS</label>
+            <input type="number" class="timetask__time-field" id="task-hours" min="0" max="99" value="0" placeholder="0">
+          </div>
+          <span class="timetask__time-sep">:</span>
+          <div class="timetask__time-group">
+            <label class="timetask__time-label">MIN</label>
+            <input type="number" class="timetask__time-field" id="task-minutes" min="0" max="59" value="00" placeholder="00">
+          </div>
+          <button type="submit" class="timetask__add-btn" id="add-task-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Task
+          </button>
+        </div>
+      </form>
+
+      <!-- Task list -->
+      <ul class="timetask__list" id="task-list">
+        <!-- Tasks rendered here by JS -->
+      </ul>
+
+      <!-- Empty state -->
+      <div class="timetask__empty" id="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <p>No tasks yet. Add one above!</p>
+      </div>
+    </section>
+
+    <!-- Pomodoro Timer -->
+    <section class="pomodoro-widget" id="pomodoro-widget">
+      <div class="pomodoro-widget__header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="pomo-mode-label">FOCUS SESSION</span>
+      </div>
+      <div class="pomodoro-widget__timer" id="pomo-time">25:00</div>
+      <div class="pomodoro-widget__controls">
+        <button class="pomo-btn" id="pomo-start-btn">Start</button>
+        <button class="pomo-btn pomo-btn--secondary" id="pomo-reset-btn">Reset</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>TimeTask — Todo with Time Tracking</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
