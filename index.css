@@ -176,7 +176,8 @@ body {
   color: var(--text-primary);
   letter-spacing: 0.03em;
   text-shadow: 0 0 30px hsla(265, 80%, 70%, 0.25);
-  transition: color var(--duration-fast);
+  transform: translateZ(0);
+  will-change: opacity, transform;
 }
 
 .clock__digit--seconds {
@@ -260,6 +261,8 @@ body {
   font-weight: 700;
   color: var(--accent-primary);
   text-shadow: 0 0 20px hsla(265, 80%, 70%, 0.2);
+  transform: translateZ(0);
+  will-change: opacity, transform;
 }
 
 .countdown-card__name {
@@ -267,257 +270,6 @@ body {
   font-weight: 500;
   letter-spacing: 0.15em;
   color: var(--text-muted);
-}
-
-/* ─── Habit Tracker Widget ─── */
-.habit-widget {
-  width: 100%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  padding: var(--space-md) var(--space-xl);
-  contain: content;
-  box-shadow: var(--shadow-card), var(--shadow-glow);
-  animation: fadeInUp 0.8s var(--ease-out) 0.15s both;
-}
-
-.habit-widget:hover {
-  border-color: var(--border-glow);
-}
-
-.habit-widget__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-md);
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.habit-widget__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.habit-widget__title svg {
-  color: var(--accent-primary);
-}
-
-.habit-widget__title h1 {
-  font-family: var(--font-body);
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.habit-widget__toggle {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--duration-fast);
-}
-
-.habit-widget__toggle:hover {
-  background: var(--bg-surface);
-  color: var(--text-primary);
-}
-
-.habit-widget__toggle svg {
-  transition: transform var(--duration-fast);
-}
-
-.habit-widget.collapsed .habit-widget__toggle svg {
-  transform: rotate(180deg);
-}
-
-.habit-widget.collapsed .habit-list,
-.habit-widget.collapsed .habit-form {
-  display: none;
-}
-
-.habit-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--space-md) 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.habit-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-}
-
-.habit-item__name {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.streak-fire {
-  font-size: 0.8rem;
-  color: #ff9800;
-  font-weight: bold;
-  background: hsla(36, 100%, 50%, 0.15);
-  padding: 2px 6px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.habit-item__streaks {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.habit-circle {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--border-subtle);
-  background: transparent;
-  cursor: pointer;
-  transition: all var(--duration-fast);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.habit-circle:hover {
-  border-color: #ff9800;
-  background: hsla(36, 100%, 50%, 0.1);
-}
-
-.habit-circle.completed {
-  background: hsla(36, 100%, 50%, 0.15);
-  border-color: #ff9800;
-}
-
-.habit-circle.completed::after {
-  content: '🔥';
-  font-size: 14px;
-}
-
-.habit-circle.today {
-  border-color: var(--accent-primary);
-}
-
-.habit-circle.today::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: var(--accent-primary);
-  border-radius: 50%;
-}
-
-.habit-item__delete {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 12px;
-  opacity: 0;
-  transition: all var(--duration-fast);
-}
-
-.habit-item:hover .habit-item__delete {
-  opacity: 1;
-}
-
-.habit-item__delete:hover {
-  color: var(--state-error);
-  background: hsla(0, 100%, 60%, 0.1);
-}
-
-.habit-form {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.habit-input {
-  flex: 1;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.9rem;
-  transition: border-color var(--duration-fast);
-}
-
-.habit-input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px hsla(265, 80%, 60%, 0.12);
-}
-
-.habit-add-btn {
-  background: var(--accent-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 0 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--duration-fast);
-}
-
-.habit-add-btn:hover {
-  background: var(--accent-hover);
-}
-
-.floating-fire {
-  position: absolute;
-  pointer-events: none;
-  font-size: 1.5rem;
-  z-index: 1000;
-  animation: fireFloat 1s ease-out forwards;
-}
-
-@keyframes fireFloat {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(0.8);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px) scale(1.5);
-  }
 }
 
 /* ─── TimeTask Widget ─── */
@@ -570,7 +322,7 @@ body {
   cursor: pointer;
   padding: var(--space-xs);
   border-radius: var(--radius-sm);
-  transition: all var(--duration-fast);
+  transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -605,7 +357,7 @@ body {
   visibility: hidden;
   transform: translateY(-8px) scale(0.96);
   transform-origin: top right;
-  transition: all var(--duration-fast) var(--ease-out);
+  transition: opacity var(--duration-fast) var(--ease-out), visibility var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
   z-index: 100;
 }
 
@@ -629,7 +381,7 @@ body {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: color var(--duration-fast), background-color var(--duration-fast);
   text-align: left;
 }
 
@@ -694,7 +446,7 @@ body {
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   outline: none;
-  transition: all var(--duration-fast);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .timetask__input::placeholder {
@@ -737,7 +489,7 @@ body {
   padding: 0.45rem 0.6rem;
   outline: none;
   text-align: center;
-  transition: all var(--duration-fast);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   -moz-appearance: textfield;
 }
 
@@ -774,7 +526,7 @@ body {
   padding: 0.55rem 1.2rem;
   cursor: pointer;
   box-shadow: var(--shadow-btn);
-  transition: all var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
   white-space: nowrap;
 }
 
@@ -821,7 +573,8 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  transition: all var(--duration-normal) var(--ease-out);
+  contain: content;
+  transition: background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out);
   animation: taskSlideIn 0.4s var(--ease-spring) both;
 }
 
@@ -872,7 +625,7 @@ body {
   inset: 0;
   border: 2px solid var(--border-subtle);
   border-radius: 6px;
-  transition: all var(--duration-fast);
+  transition: background-color var(--duration-fast), border-color var(--duration-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -885,7 +638,7 @@ body {
   stroke-width: 3;
   opacity: 0;
   transform: scale(0.5);
-  transition: all var(--duration-fast) var(--ease-spring);
+  transition: opacity var(--duration-fast) var(--ease-spring), transform var(--duration-fast) var(--ease-spring);
 }
 
 .task-item__checkbox input:checked + .task-item__checkmark {
@@ -912,7 +665,7 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
-  transition: all var(--duration-normal);
+  transition: color var(--duration-normal);
   word-break: break-word;
 }
 
@@ -950,7 +703,7 @@ body {
   padding: 4px;
   border-radius: var(--radius-sm);
   opacity: 0;
-  transition: all var(--duration-fast);
+  transition: color var(--duration-fast), background-color var(--duration-fast), opacity var(--duration-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1110,7 +863,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: color var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
   z-index: 10;
 }
 
@@ -1265,7 +1018,9 @@ body {
   padding: var(--space-lg) var(--space-xl);
   text-align: center;
   box-shadow: var(--shadow-card);
-  transition: all var(--duration-normal);
+  /* OPTIMIZATION: was 'transition: all' which tracked every CSS property.
+     Only border-color and box-shadow actually animate on state change. */
+  transition: border-color var(--duration-normal), box-shadow var(--duration-normal);
 }
 .pomodoro-widget:hover {
   border-color: var(--border-glow);
@@ -1316,7 +1071,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-btn);
-  transition: all var(--duration-fast);
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
 }
 .pomo-btn:hover {
   transform: translateY(-1px);
@@ -1336,6 +1091,35 @@ body {
   box-shadow: none;
 }
 
+/* ─── Action Buttons ─── */
+.timetask__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.timetask__action-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--duration-fast), background-color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.timetask__action-btn:hover {
+  background: var(--bg-surface);
+  color: var(--state-error);
+  border-color: var(--state-error);
+}
+
 /* ─── Drag & Drop ─── */
 .task-item.dragging {
   opacity: 0.4;
@@ -1345,3 +1129,205 @@ body {
 .task-item.drag-over {
   border-top: 2px solid var(--accent-primary);
 }
+
+/* =========================================
+   Digital Wellbeing Widget
+   ========================================= */
+.wellbeing-widget {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg) var(--space-xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-xl);
+  transition: border-color var(--duration-normal);
+}
+.wellbeing-widget:hover {
+  border-color: var(--border-glow);
+}
+
+.wellbeing-widget__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.wellbeing-widget__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary);
+}
+
+.wellbeing-widget__title h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.wellbeing-widget__title svg {
+  color: var(--accent-primary);
+}
+
+/* Live tracking indicator */
+.wellbeing-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(142, 71%, 45%);
+  box-shadow: 0 0 6px hsla(142, 71%, 45%, 0.6);
+  animation: livePulse 2s ease-in-out infinite;
+  margin-left: 4px;
+}
+
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 6px hsla(142, 71%, 45%, 0.6);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 12px hsla(142, 71%, 45%, 0.3);
+  }
+}
+
+/* Total screen time */
+.wellbeing-widget__total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.wellbeing-widget__total-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.wellbeing-widget__total-time {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-shadow: 0 0 15px hsla(265, 80%, 60%, 0.2);
+}
+
+.wellbeing-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wellbeing-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  animation: wellbeingFadeIn 0.4s var(--ease-out) both;
+}
+
+@keyframes wellbeingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.wellbeing-item__info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.wellbeing-item__domain {
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wellbeing-item__domain img {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.wellbeing-item__time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+}
+
+.wellbeing-item__bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.wellbeing-item__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Medium usage: amber gradient */
+.wellbeing-item__bar-fill--medium {
+  background: linear-gradient(90deg, hsl(38, 92%, 50%), hsl(25, 95%, 53%));
+}
+
+/* High usage: red/warm gradient */
+.wellbeing-item__bar-fill--high {
+  background: linear-gradient(90deg, hsl(0, 84%, 60%), hsl(340, 82%, 52%));
+}
+
+.wellbeing-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: var(--space-xl) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.wellbeing-empty svg {
+  opacity: 0.4;
+}
+
+.wellbeing-empty.hidden {
+  display: none;
+}
+
+/* ─── Performance: Pause ALL animations when page is not visible ─── */
+/* Controlled by app.js toggling .page-hidden on <body> */
+.page-hidden .bg-orb,
+.page-hidden .clock__sep,
+.page-hidden .wellbeing-live-dot {
+  animation-play-state: paused !important;
+}
+
+/* Reduce compositor layers on hidden page */
+.page-hidden .clock__digit,
+.page-hidden .countdown-card__number {
+  will-change: auto;
+}
+

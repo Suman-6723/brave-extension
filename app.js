@@ -49,19 +49,13 @@
   const pomoStartBtn = document.getElementById('pomo-start-btn');
   const pomoResetBtn = document.getElementById('pomo-reset-btn');
 
-  // Habit Tracker
-  const habitWidget = document.getElementById('habit-widget');
-  const habitToggleBtn = document.getElementById('habit-toggle-btn');
-  const habitList = document.getElementById('habit-list');
-  const habitForm = document.getElementById('habit-form');
-  const habitInput = document.getElementById('habit-input');
+  const clearDoneBtn = document.getElementById('clear-done-btn');
+  const clearAllBtn  = document.getElementById('clear-all-btn');
 
   // ─── State ───
   const STORAGE_KEY = 'timetask_data';
   let tasks = [];
-  let habits = [];
   let hideMode = 'none'; // 'none', 'completed', 'all'
-  let habitCollapsed = false;
   let elapsedTotalSeconds = 0;
   let elapsedStartTime = null;
 
@@ -84,8 +78,6 @@
       if (raw) {
         const data = JSON.parse(raw);
         tasks = data.tasks || [];
-        habits = data.habits || [];
-        habitCollapsed = !!data.habitCollapsed;
         if (data.hideCompleted) hideMode = 'completed';
         else hideMode = data.hideMode || 'none';
         
@@ -103,8 +95,6 @@
   function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       tasks,
-      habits,
-      habitCollapsed,
       hideMode,
       elapsedTotalSeconds,
       elapsedStartTime,
@@ -139,10 +129,22 @@
   }
 
   // ─── Year-End Countdown ───
+  // OPTIMIZATION: Cache yearEnd — it never changes within the same year.
+  // Previously this created 2 Date objects per second (86,400/day) unnecessarily.
+  let _yearEndMs = 0;
+  let _yearEndYear = -1;
+  function getYearEnd() {
+    const yr = new Date().getFullYear();
+    if (yr !== _yearEndYear) {
+      _yearEndMs = new Date(yr, 11, 31, 23, 59, 59, 999).getTime();
+      _yearEndYear = yr;
+    }
+    return _yearEndMs;
+  }
+
   function updateCountdown() {
-    const now = new Date();
-    const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-    const diff = yearEnd - now;
+    const now = Date.now();
+    const diff = getYearEnd() - now;
 
     if (diff <= 0) return;
 
@@ -165,6 +167,12 @@
 
   // ─── Elapsed timer ───
   function updateElapsedState() {
+    if (tasks.length === 0) {
+      elapsedTotalSeconds = 0;
+      elapsedStartTime = null;
+      return;
+    }
+    
     const hasActiveTasks = tasks.some(t => !t.completed);
     if (hasActiveTasks) {
       if (elapsedStartTime === null) {
@@ -195,13 +203,17 @@
     }
   }
 
+  // OPTIMIZATION: Cache stat values — avoid DOM writes when nothing changed.
+  let _prevStatTotal = '', _prevStatTasks = -1, _prevStatCompleted = -1;
   function updateTaskStats() {
     const totalMinutes = tasks.reduce((sum, t) => sum + (t.hours * 60 + t.minutes), 0);
     const totalH = (totalMinutes / 60) | 0;
     const totalM = totalMinutes % 60;
-    statTotalTime.textContent = totalH + 'h ' + totalM + 'm';
-    statTasks.textContent = tasks.length;
-    statCompleted.textContent = tasks.filter(t => t.completed).length;
+    const totalStr = totalH + 'h ' + totalM + 'm';
+    const completedCount = tasks.filter(t => t.completed).length;
+    if (_prevStatTotal !== totalStr)      { statTotalTime.textContent = totalStr; _prevStatTotal = totalStr; }
+    if (_prevStatTasks !== tasks.length)  { statTasks.textContent = tasks.length; _prevStatTasks = tasks.length; }
+    if (_prevStatCompleted !== completedCount) { statCompleted.textContent = completedCount; _prevStatCompleted = completedCount; }
   }
 
   // ─── Render Tasks ───
@@ -226,7 +238,9 @@
       li.className = task.completed ? 'task-item completed' : 'task-item';
       li.dataset.id = task.id;
       li.draggable = true;
-      li.style.animationDelay = (visibleIndex * 0.04) + 's';
+      // OPTIMIZATION: Only stagger animation on single new-task adds, not bulk re-renders.
+      // Staggering 10+ tasks on init caused competing animations during first paint.
+      if (_isAddingTask) li.style.animationDelay = (visibleIndex * 0.04) + 's';
 
       const timeStr = formatTime(task.hours, task.minutes);
 
@@ -266,6 +280,8 @@
   }
 
   // ─── Task Actions ───
+  // Flag used by renderTasks to apply stagger animation only on single adds, not bulk renders.
+  let _isAddingTask = false;
   function addTask(text, hours, minutes) {
     tasks.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -277,7 +293,9 @@
     });
     updateElapsedState();
     saveTasks();
+    _isAddingTask = true;
     renderTasks();
+    _isAddingTask = false;
   }
 
   function toggleTask(id) {
@@ -286,7 +304,21 @@
       task.completed = !task.completed;
       updateElapsedState();
       saveTasks();
-      renderTasks();
+      
+      const li = taskList.querySelector('[data-id="' + id + '"]');
+      if (li) {
+        if (hideMode === 'completed' && task.completed) {
+          li.classList.add('removing');
+          li.addEventListener('animationend', () => renderTasks(), { once: true });
+        } else {
+          li.className = task.completed ? 'task-item completed' : 'task-item';
+          updateTaskStats();
+        }
+      } else if (hideMode === 'completed' && !task.completed) {
+        renderTasks();
+      } else {
+        renderTasks();
+      }
     }
   }
 
@@ -310,11 +342,14 @@
 
   // ─── Drag & Drop Event Listeners ───
   let draggedTaskId = null;
+  let _draggingEl = null; // OPTIMIZATION: cache reference so dragover doesn't querySelector the whole document at 60fps
+  let _currentDragOverEl = null;
   
   taskList.addEventListener('dragstart', e => {
     const li = e.target.closest('.task-item');
     if (!li) return;
     draggedTaskId = li.dataset.id;
+    _draggingEl = li;
     setTimeout(() => li.classList.add('dragging'), 0);
   });
 
@@ -322,27 +357,37 @@
     const li = e.target.closest('.task-item');
     if (li) li.classList.remove('dragging');
     draggedTaskId = null;
-    taskList.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    _draggingEl = null;
+    if (_currentDragOverEl) {
+      _currentDragOverEl.classList.remove('drag-over');
+      _currentDragOverEl = null;
+    }
   });
 
   taskList.addEventListener('dragover', e => {
-    e.preventDefault(); 
+    e.preventDefault();
+    if (!_draggingEl) return;
     const afterElement = getDragAfterElement(taskList, e.clientY);
-    const draggable = document.querySelector('.dragging');
-    if (!draggable) return;
 
-    taskList.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    if (_currentDragOverEl !== afterElement) {
+      if (_currentDragOverEl) _currentDragOverEl.classList.remove('drag-over');
+      if (afterElement) afterElement.classList.add('drag-over');
+      _currentDragOverEl = afterElement;
+    }
     
     if (afterElement == null) {
-      taskList.appendChild(draggable);
+      taskList.appendChild(_draggingEl);
     } else {
-      afterElement.classList.add('drag-over');
-      taskList.insertBefore(draggable, afterElement);
+      taskList.insertBefore(_draggingEl, afterElement);
     }
   });
 
   taskList.addEventListener('drop', e => {
     e.preventDefault();
+    if (_currentDragOverEl) {
+      _currentDragOverEl.classList.remove('drag-over');
+      _currentDragOverEl = null;
+    }
     if (!draggedTaskId) return;
     
     // Reconstruct the tasks array based on new DOM order
@@ -394,6 +439,26 @@
     if (btn) deleteTask(btn.dataset.id);
   });
 
+  if (clearDoneBtn) {
+    clearDoneBtn.addEventListener('click', () => {
+      tasks = tasks.filter(t => !t.completed);
+      updateElapsedState();
+      saveTasks();
+      renderTasks();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', () => {
+      if (tasks.length > 0 && confirm('Are you sure you want to clear all tasks?')) {
+        tasks = [];
+        updateElapsedState();
+        saveTasks();
+        renderTasks();
+      }
+    });
+  }
+
   // ─── Dropdown Logic ───
   function updateDropdownUI() {
     hideCompletedBtn.classList.toggle('active', hideMode === 'completed');
@@ -429,28 +494,42 @@
   });
 
   // ─── Pomodoro Logic ───
+  // OPTIMIZATION: Cache previous pomodoro display values — avoids silent DOM writes
+  // every second when the timer is paused (button text, mode label don't change).
+  let _prevPomoTime = '', _prevPomoMode = '', _prevPomoRunning = null;
+  let lastPomoTickTime = null;
+
   function updatePomodoroUI() {
     const m = Math.floor(pomoTimeLeft / 60);
     const s = pomoTimeLeft % 60;
-    pomoTimeDisplay.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
-    pomoModeLabel.textContent = pomoMode === 'focus' ? 'FOCUS SESSION' : 'BREAK TIME';
-    
+    const timeStr = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+    const modeStr = pomoMode === 'focus' ? 'FOCUS SESSION' : 'BREAK TIME';
+    const btnStr  = pomoIsRunning ? 'Pause' : 'Start';
+
+    if (_prevPomoTime !== timeStr)          { pomoTimeDisplay.textContent = timeStr; _prevPomoTime = timeStr; }
+    if (_prevPomoMode !== modeStr)          { pomoModeLabel.textContent = modeStr; _prevPomoMode = modeStr; }
+    if (_prevPomoRunning !== pomoIsRunning) { pomoStartBtn.textContent = btnStr; _prevPomoRunning = pomoIsRunning; }
+
     if (pomoMode === 'break') {
       pomoWidget.classList.add('break');
     } else {
       pomoWidget.classList.remove('break');
     }
-
-    pomoStartBtn.textContent = pomoIsRunning ? 'Pause' : 'Start';
   }
 
   pomoStartBtn.addEventListener('click', () => {
     pomoIsRunning = !pomoIsRunning;
+    if (pomoIsRunning) {
+      lastPomoTickTime = Date.now();
+    } else {
+      lastPomoTickTime = null;
+    }
     updatePomodoroUI();
   });
 
   pomoResetBtn.addEventListener('click', () => {
     pomoIsRunning = false;
+    lastPomoTickTime = null;
     pomoMode = 'focus';
     pomoTimeLeft = POMO_WORK;
     saveTasks();
@@ -460,7 +539,18 @@
   function tickPomodoro() {
     if (!pomoIsRunning) return;
     
-    pomoTimeLeft--;
+    const now = Date.now();
+    if (!lastPomoTickTime) {
+      lastPomoTickTime = now;
+      return;
+    }
+
+    const elapsedSeconds = Math.floor((now - lastPomoTickTime) / 1000);
+    if (elapsedSeconds < 1) return;
+
+    lastPomoTickTime += elapsedSeconds * 1000;
+    pomoTimeLeft = Math.max(0, pomoTimeLeft - elapsedSeconds);
+
     if (pomoTimeLeft <= 0) {
       if (pomoMode === 'focus') {
         pomoMode = 'break';
@@ -468,7 +558,8 @@
       } else {
         pomoMode = 'focus';
         pomoTimeLeft = POMO_WORK;
-        pomoIsRunning = false; 
+        pomoIsRunning = false;
+        lastPomoTickTime = null;
       }
       saveTasks();
     }
@@ -541,134 +632,50 @@
     }
   }
 
-  // ─── Habit Tracker Logic ───
-  function getPast7Dates() {
-    const dates = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const str = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      dates.push(str);
-    }
-    return dates;
+
+  // ─── Tick loop with Visibility Awareness ───
+  // Pauses timer ticks when tab is hidden to save CPU and battery while browsing other sites (e.g. YouTube).
+  // Immediately resyncs all clocks, timers, and Pomodoro when the user returns.
+  let tickTimeoutId = null;
+
+  function scheduleNextTick() {
+    if (document.hidden) return;
+    const now = Date.now();
+    const delay = 1000 - (now % 1000);
+    tickTimeoutId = setTimeout(tick, delay);
   }
 
-  function renderHabits() {
-    habitList.innerHTML = '';
-    const dates = getPast7Dates();
-    const todayStr = dates[dates.length - 1];
-
-    habitWidget.classList.toggle('collapsed', habitCollapsed);
-
-    habits.forEach(habit => {
-      const li = document.createElement('li');
-      li.className = 'habit-item';
-      
-      let streak = 0;
-      for (let i = dates.length - 1; i >= 0; i--) {
-        if (habit.history[dates[i]]) {
-          streak++;
-        } else if (i !== dates.length - 1) {
-          break;
-        }
-      }
-
-      const name = document.createElement('span');
-      name.className = 'habit-item__name';
-      name.textContent = habit.name;
-      
-      if (streak > 0) {
-        const fire = document.createElement('span');
-        fire.className = 'streak-fire';
-        fire.textContent = `Streak: ${streak} 🔥`;
-        name.appendChild(fire);
-      }
-      
-      const streaks = document.createElement('div');
-      streaks.className = 'habit-item__streaks';
-      
-      dates.forEach((dateStr) => {
-        const circle = document.createElement('div');
-        circle.className = 'habit-circle';
-        if (dateStr === todayStr) circle.classList.add('today');
-        if (habit.history[dateStr]) circle.classList.add('completed');
-        
-        circle.title = dateStr;
-        circle.addEventListener('click', (e) => {
-          const isCompleting = !habit.history[dateStr];
-          habit.history[dateStr] = isCompleting;
-          if (isCompleting) spawnFireEmoji(e.clientX, e.clientY);
-          saveTasks();
-          renderHabits();
-        });
-        
-        streaks.appendChild(circle);
-      });
-      
-      const delBtn = document.createElement('button');
-      delBtn.className = 'habit-item__delete';
-      delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      delBtn.title = 'Delete Habit';
-      delBtn.addEventListener('click', () => {
-        habits = habits.filter(h => h.id !== habit.id);
-        saveTasks();
-        renderHabits();
-      });
-      
-      streaks.appendChild(delBtn);
-      li.appendChild(name);
-      li.appendChild(streaks);
-      habitList.appendChild(li);
-    });
-  }
-
-  function spawnFireEmoji(x, y) {
-    const fire = document.createElement('div');
-    fire.className = 'floating-fire';
-    fire.textContent = '🔥';
-    fire.style.left = (x - 10) + 'px';
-    fire.style.top = (y - 10) + 'px';
-    document.body.appendChild(fire);
-    
-    setTimeout(() => {
-      fire.remove();
-    }, 1000);
-  }
-
-  habitForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = habitInput.value.trim();
-    if (!name) return;
-    
-    habits.push({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name: name,
-      history: {}
-    });
-    
-    habitInput.value = '';
-    saveTasks();
-    renderHabits();
-  });
-
-  habitToggleBtn.addEventListener('click', () => {
-    habitCollapsed = !habitCollapsed;
-    saveTasks();
-    renderHabits();
-  });
-
-  // ─── Tick loop using setTimeout for performance ───
   function tick() {
     updateClock();
     updateCountdown();
     updateElapsed();
     tickPomodoro();
-
-    // schedule next tick precisely at the next whole second
-    const now = Date.now();
-    const delay = 1000 - (now % 1000);
-    setTimeout(tick, delay);
+    scheduleNextTick();
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // PERF: Pause JS tick loop AND signal CSS to pause all infinite animations
+      // (background orbs, clock blink, live-pulse dot). This eliminates GPU compositor
+      // work while the user is on YouTube or any other tab.
+      document.body.classList.add('page-hidden');
+      if (tickTimeoutId) {
+        clearTimeout(tickTimeoutId);
+        tickTimeoutId = null;
+      }
+    } else {
+      document.body.classList.remove('page-hidden');
+      updateClock();
+      updateCountdown();
+      updateElapsed();
+      if (pomoIsRunning) {
+        tickPomodoro();
+      } else {
+        updatePomodoroUI();
+      }
+      scheduleNextTick();
+    }
+  });
 
   // ─── Init ───
   loadTasks();
@@ -678,7 +685,13 @@
   updateClock();
   updateCountdown();
   renderTasks();
-  renderHabits();
+
   tick(); 
+
+  // PERF: Swap Google Fonts from media="print" to "all" after first paint.
+  // This makes the font stylesheet non-render-blocking — the page paints instantly
+  // with fallback fonts, then swaps to custom fonts when they load.
+  const fontLink = document.getElementById('google-fonts-link');
+  if (fontLink) fontLink.media = 'all';
 
 })();

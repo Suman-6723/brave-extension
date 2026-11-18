@@ -11,5 +11,8 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage", "bookmarks"]
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "bookmarks", "tabs", "alarms", "idle"]
 }
